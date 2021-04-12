@@ -5,7 +5,15 @@ using UnityEngine;
 public enum CellState
 {
     INACTIVE = 0,
-    ACTIVE,
+	ACTIVE,
+	SAND,
+	//WATER,
+	//LAVA,
+	//ACID,
+	//FIRE,
+	//STEAM,
+	//SMOKE,
+	WOOD,
     COUNT
 }
 
@@ -28,7 +36,13 @@ public struct Cell
 				case CellState.ACTIVE:
                     currentColor = Color.white;
 					break;
-                default:
+				case CellState.SAND:
+					currentColor = Color.yellow;
+					break;
+				case CellState.WOOD:
+					currentColor = new Color(0.413f,0.346f,0.240f);
+					break;
+				default:
 					break;
 			}
 			currentState = value;
@@ -39,20 +53,21 @@ public struct Cell
 public class ParticleManager : MonoBehaviour
 {
     public Vector2Int ratio = Vector2Int.zero;
-	public float updateTimer = 1f;
-	private float chrono;
+	//public float updateTimer = 1f;
+	//private float chrono;
     private Cell[,] cells;
     private float size = 1.0f;
     private Vector2 scaleSize = Vector2.zero;
 
 	private bool simulationIsOn = false;
 
-    public Material mat;
+	public CellState cursorState = CellState.ACTIVE;
+	public Material mat;
 
     // Start is called before the first frame update
     void Start()
     {
-		chrono = updateTimer;
+		//chrono = updateTimer;
 
         cells = new Cell[ratio.x,ratio.y];
 
@@ -76,18 +91,11 @@ public class ParticleManager : MonoBehaviour
     {
 		ComputeInput();
 
-		if(chrono > 0f)
-			chrono -= Time.deltaTime;
+		//if(chrono > 0f)
+			//chrono -= Time.deltaTime;
 
-		if(simulationIsOn && chrono <= 0f)
+		if(simulationIsOn/* && chrono <= 0f*/)
 		{
-			for (int j = 0; j < ratio.y; j++)
-			{
-				for (int i = 0; i < ratio.x; i++)
-				{
-					cells[i, j].CurrentState = cells[i, j].nextState;
-				}
-			}
 			for (int j = 0; j < ratio.y; j++)
 			{
 				for (int i = 0; i < ratio.x; i++)
@@ -95,7 +103,14 @@ public class ParticleManager : MonoBehaviour
 					UpdateCell(i, j);
 				}
 			}
-			chrono = updateTimer;
+			for (int j = 0; j < ratio.y; j++)
+			{
+				for (int i = 0; i < ratio.x; i++)
+				{
+					cells[i, j].CurrentState = cells[i, j].nextState;
+				}
+			}
+			//chrono = updateTimer;
 		}
 	}
 
@@ -147,7 +162,7 @@ public class ParticleManager : MonoBehaviour
 				//}
 				//GL.Color(debugColor);
 
-				GL.Color(cells[i,j].currentColor);
+				GL.Color(cells[i, j].currentColor);
 				GL.Vertex3(i*size, j*size, 0);					//0;0
 				GL.Vertex3(i*size, j*size + size, 0);			//0;height
 				GL.Vertex3(i*size + size, j*size + size, 0);	//width;height
@@ -176,8 +191,8 @@ public class ParticleManager : MonoBehaviour
 			if (mousePos.x < 0f || mousePos.y < 0f || mousePos.x > 1f || mousePos.y > 1f)
 				return;
 			Vector2Int coord = new Vector2Int(Mathf.FloorToInt(mousePos.x / size), Mathf.FloorToInt(mousePos.y / size));
-			cells[coord.x, coord.y].CurrentState = CellState.ACTIVE;
-			cells[coord.x, coord.y].nextState = CellState.ACTIVE;
+			cells[coord.x, coord.y].CurrentState = cursorState;
+			cells[coord.x, coord.y].nextState = cursorState;
 		}
 	}
 
@@ -187,28 +202,68 @@ public class ParticleManager : MonoBehaviour
 		{
 			case CellState.INACTIVE:
 			{
-				int aliveCells = CountAliveCells(_xIndex, _yIndex);
-				if (aliveCells == 3)
-				{
-					cells[_xIndex, _yIndex].nextState = CellState.ACTIVE;
-					Debug.Log("Should resurect at " + _xIndex + ";" + _yIndex);
-				}
+					//int aliveCells = CountAliveCells(_xIndex, _yIndex);
+					//if (aliveCells == 3)
+					//{
+					//	cells[_xIndex, _yIndex].nextState = CellState.ACTIVE;
+					//	Debug.Log("Should resurect at " + _xIndex + ";" + _yIndex);
+					//}
 				break;
 			}
 			case CellState.ACTIVE:
 			{
-				int aliveCells = CountAliveCells(_xIndex, _yIndex);
-				if (aliveCells < 2 || aliveCells > 3)
-				{
-					cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
-				}
+					//int aliveCells = CountAliveCells(_xIndex, _yIndex);
+					//if (aliveCells < 2 || aliveCells > 3)
+					//{
+					//	cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
+					//}
 				break;
 			}
+			case CellState.SAND:
+			{
+					System.Tuple<int, int> coordinate = new System.Tuple<int,int>(_xIndex,_yIndex);
+
+					coordinate = FindBotFreeCell(_xIndex,_yIndex);
+					cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
+					cells[coordinate.Item1,coordinate.Item2].nextState = CellState.SAND;
+					break;
+			}
+			case CellState.WOOD:
 			case CellState.COUNT:
-				break;
 			default:
 				break;
 		}
+	}
+
+	private System.Tuple<int, int> FindBotFreeCell(int _xIndex, int _yIndex)
+	{
+		System.Tuple<int, int> toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
+		if (_yIndex != 0)
+		{
+			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex - 1);
+			if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
+				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD)
+			{
+				return toReturn;
+			}
+
+			toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex - 1);
+			if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
+				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD)
+			{
+				return toReturn;
+			}
+
+			toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex - 1);
+			if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
+				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD)
+			{
+				return toReturn;
+			}
+
+			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
+		}
+		return toReturn;
 	}
 
 	private int CountAliveCells(int _xIndex, int _yIndex)
