@@ -219,6 +219,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1082d389f669fd42bb45626b0951a1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ratio: {x: 220, y: 220}
+  ratio: {x: 120, y: 120}
   cursorState: 2
   mat: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}

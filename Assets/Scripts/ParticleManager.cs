@@ -7,7 +7,7 @@ public enum CellState
     INACTIVE = 0,
 	ACTIVE,
 	SAND,
-	//WATER,
+	WATER,
 	//LAVA,
 	//ACID,
 	//FIRE,
@@ -38,6 +38,9 @@ public struct Cell
 					break;
 				case CellState.SAND:
 					currentColor = Color.yellow;
+					break;
+				case CellState.WATER:
+					currentColor = Color.cyan;
 					break;
 				case CellState.WOOD:
 					currentColor = new Color(0.413f,0.346f,0.240f);
@@ -222,12 +225,24 @@ public class ParticleManager : MonoBehaviour
 			case CellState.SAND:
 			{
 					System.Tuple<int, int> coordinate = new System.Tuple<int,int>(_xIndex,_yIndex);
+					coordinate = FindFreeCellSand(_xIndex,_yIndex);
 
-					coordinate = FindBotFreeCell(_xIndex,_yIndex);
 					cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
+					if(cells[coordinate.Item1, coordinate.Item2].CurrentState == CellState.WATER)
+						cells[_xIndex, _yIndex].nextState = CellState.WATER;
+
 					cells[coordinate.Item1,coordinate.Item2].nextState = CellState.SAND;
 					break;
 			}
+			case CellState.WATER:
+				{
+					System.Tuple<int, int> coordinate = new System.Tuple<int, int>(_xIndex, _yIndex);
+
+					coordinate = FindFreeCellWater(_xIndex, _yIndex);
+					cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
+					cells[coordinate.Item1, coordinate.Item2].nextState = CellState.WATER;
+					break;
+				}
 			case CellState.WOOD:
 			case CellState.COUNT:
 			default:
@@ -235,7 +250,7 @@ public class ParticleManager : MonoBehaviour
 		}
 	}
 
-	private System.Tuple<int, int> FindBotFreeCell(int _xIndex, int _yIndex)
+	private System.Tuple<int, int> FindFreeCellSand(int _xIndex, int _yIndex)
 	{
 		System.Tuple<int, int> toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
 		if (_yIndex != 0)
@@ -247,18 +262,90 @@ public class ParticleManager : MonoBehaviour
 				return toReturn;
 			}
 
-			toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex - 1);
-			if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
-				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD)
+			if (_xIndex > 0)
 			{
-				return toReturn;
+				toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex - 1);
+				if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
+					&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD)
+				{
+					return toReturn;
+				}
 			}
 
-			toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex - 1);
-			if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
-				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD)
+			if(_xIndex < ratio.x - 1)
 			{
-				return toReturn;
+				toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex - 1);
+				if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
+					&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD)
+				{
+					return toReturn;
+				}
+			}
+
+			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
+		}
+		return toReturn;
+	}
+
+	private System.Tuple<int, int> FindFreeCellWater(int _xIndex, int _yIndex)
+	{
+
+		System.Tuple<int, int> toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
+		if(toReturn.Item1 == _xIndex && toReturn.Item2 == _yIndex)
+		{
+			if (_yIndex != 0)
+			{
+				toReturn = new System.Tuple<int, int>(_xIndex, _yIndex - 1);
+				if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
+					&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD
+					&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WATER)
+				{
+					return toReturn;
+				}
+
+				if (_xIndex > 0)
+				{
+					toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex - 1);
+					if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
+						&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD
+						&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WATER)
+					{
+						return toReturn;
+					}
+				}
+
+				if (_xIndex < ratio.x - 1)
+				{
+					toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex - 1);
+					if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
+						&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD
+						&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WATER)
+					{
+						return toReturn;
+					}
+				}
+
+				toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
+			}
+			if (_xIndex > 0)
+			{
+				toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex);
+				if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
+				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD
+				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WATER)
+				{
+					return toReturn;
+				}
+			}
+			if(_xIndex < scaleSize.x - 1)
+			{
+				toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex);
+				if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
+				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD
+				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WATER)
+				{
+					return toReturn;
+				}
 			}
 
 			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
