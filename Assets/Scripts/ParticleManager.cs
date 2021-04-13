@@ -8,7 +8,7 @@ public enum CellState
 	ACTIVE,
 	SAND,
 	WATER,
-	//LAVA,
+	LAVA,
 	//ACID,
 	FIRE,
 	//STEAM,
@@ -41,6 +41,9 @@ public struct Cell
 					break;
 				case CellState.WATER:
 					currentColor = Color.cyan;
+					break;
+				case CellState.LAVA:
+					currentColor = new Color(0.75f,0.288f,0.156f);
 					break;
 				case CellState.WOOD:
 					currentColor = new Color(0.413f,0.346f,0.240f);
@@ -255,6 +258,8 @@ public class ParticleManager : MonoBehaviour
 					cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
 					if(cells[coordinate.Item1, coordinate.Item2].nextState == CellState.WATER)
 						cells[_xIndex, _yIndex].nextState = CellState.WATER;
+					else if(cells[coordinate.Item1, coordinate.Item2].nextState == CellState.LAVA)
+						cells[_xIndex, _yIndex].nextState = CellState.LAVA;
 
 					cells[coordinate.Item1,coordinate.Item2].nextState = CellState.SAND;
 					break;
@@ -265,9 +270,37 @@ public class ParticleManager : MonoBehaviour
 
 				coordinate = FindFreeCellWater(_xIndex, _yIndex);
 				cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
-				cells[coordinate.Item1, coordinate.Item2].nextState = CellState.WATER;
+				if(cells[coordinate.Item1, coordinate.Item2].nextState == CellState.LAVA)
+				{
+					cells[coordinate.Item1, coordinate.Item2].nextState = CellState.SMOKE;
+				}
+				else
+				{
+					cells[coordinate.Item1, coordinate.Item2].nextState = CellState.WATER;
+				}
 				break;
 			}
+			case CellState.LAVA:
+				{
+					System.Tuple<int, int> coordinate = new System.Tuple<int, int>(_xIndex, _yIndex);
+
+					coordinate = FindFreeCellLava(_xIndex, _yIndex);
+					cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
+					if(cells[coordinate.Item1, coordinate.Item2].nextState == CellState.INACTIVE)
+					{
+						cells[coordinate.Item1, coordinate.Item2].nextState = CellState.LAVA;
+					}
+					else if (cells[coordinate.Item1, coordinate.Item2].nextState == CellState.WOOD)
+					{
+						cells[_xIndex, _yIndex].nextState = CellState.LAVA;
+						cells[coordinate.Item1, coordinate.Item2].nextState = CellState.FIRE;
+					}
+					else if (cells[coordinate.Item1, coordinate.Item2].nextState == CellState.WATER)
+					{
+						cells[coordinate.Item1, coordinate.Item2].nextState = CellState.SMOKE;
+					}
+					break;
+				}
 			case CellState.FIRE:
 			{
 				List<System.Tuple<int, int>> canBurnCells = FindFreeCellFire(_xIndex, _yIndex);
@@ -289,6 +322,10 @@ public class ParticleManager : MonoBehaviour
 					coordinate = FindFreeCellSmoke(_xIndex, _yIndex);
 
 					cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
+					if(cells[coordinate.Item1, coordinate.Item2].nextState != CellState.INACTIVE)
+					{
+						cells[_xIndex, _yIndex].nextState = cells[coordinate.Item1, coordinate.Item2].nextState;
+					}
 					cells[coordinate.Item1, coordinate.Item2].nextState = CellState.SMOKE;
 					break;
 				}
@@ -308,7 +345,8 @@ public class ParticleManager : MonoBehaviour
 		{
 			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex - 1);
 			if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
-				|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER)
+				|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER
+				|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.LAVA)
 			{
 				return toReturn;
 			}
@@ -317,7 +355,8 @@ public class ParticleManager : MonoBehaviour
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex - 1);
 				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
-					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER)
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.LAVA)
 				{
 					return toReturn;
 				}
@@ -327,7 +366,8 @@ public class ParticleManager : MonoBehaviour
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex - 1);
 				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
-					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER)
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.LAVA)
 				{
 					return toReturn;
 				}
@@ -347,7 +387,8 @@ public class ParticleManager : MonoBehaviour
 			if (_yIndex != 0)
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex, _yIndex - 1);
-				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.LAVA)
 				{
 					return toReturn;
 				}
@@ -355,7 +396,8 @@ public class ParticleManager : MonoBehaviour
 				if (_xIndex > 0)
 				{
 					toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex - 1);
-					if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
+					if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.LAVA)
 					{
 						return toReturn;
 					}
@@ -364,7 +406,8 @@ public class ParticleManager : MonoBehaviour
 				if (_xIndex < ratio.x - 1)
 				{
 					toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex - 1);
-					if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
+					if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.LAVA)
 					{
 						return toReturn;
 					}
@@ -376,7 +419,8 @@ public class ParticleManager : MonoBehaviour
 			if (_xIndex > 0)
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex);
-				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.LAVA)
 				{
 					return toReturn;
 				}
@@ -384,7 +428,74 @@ public class ParticleManager : MonoBehaviour
 			if (_xIndex < ratio.x - 1)
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex);
-				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.LAVA)
+				{
+					return toReturn;
+				}
+			}
+			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
+		}
+		return toReturn;
+	}
+
+	private System.Tuple<int, int> FindFreeCellLava(int _xIndex, int _yIndex)
+	{
+
+		System.Tuple<int, int> toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
+		if (toReturn.Item1 == _xIndex && toReturn.Item2 == _yIndex)
+		{
+			if (_yIndex != 0)
+			{
+				toReturn = new System.Tuple<int, int>(_xIndex, _yIndex - 1);
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+				|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER
+				|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WOOD)
+				{
+					return toReturn;
+				}
+
+				if (_xIndex > 0)
+				{
+					toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex - 1);
+					if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WOOD)
+					{
+						return toReturn;
+					}
+				}
+
+				if (_xIndex < ratio.x - 1)
+				{
+					toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex - 1);
+					if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WOOD)
+					{
+						return toReturn;
+					}
+				}
+
+				toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
+			}
+
+			if (_xIndex > 0)
+			{
+				toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex);
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+				|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER
+				|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WOOD)
+				{
+					return toReturn;
+				}
+			}
+			if (_xIndex < ratio.x - 1)
+			{
+				toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex);
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+				|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER
+				|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WOOD)
 				{
 					return toReturn;
 				}
@@ -423,7 +534,9 @@ public class ParticleManager : MonoBehaviour
 		if (_yIndex != ratio.y - 1)
 		{
 			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex + 1);
-			if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
+			if (cells[toReturn.Item1, toReturn.Item2].nextState != CellState.SAND
+			&& cells[toReturn.Item1, toReturn.Item2].nextState != CellState.WOOD
+			&& cells[toReturn.Item1, toReturn.Item2].nextState != CellState.SMOKE)
 			{
 				return toReturn;
 			}
@@ -431,7 +544,9 @@ public class ParticleManager : MonoBehaviour
 			if (_xIndex > 0)
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex + 1);
-				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
+				if (cells[toReturn.Item1, toReturn.Item2].nextState != CellState.SAND
+				&& cells[toReturn.Item1, toReturn.Item2].nextState != CellState.WOOD
+				&& cells[toReturn.Item1, toReturn.Item2].nextState != CellState.SMOKE)
 				{
 					return toReturn;
 				}
@@ -440,7 +555,9 @@ public class ParticleManager : MonoBehaviour
 			if (_xIndex < ratio.x - 1)
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex + 1);
-				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
+				if (cells[toReturn.Item1, toReturn.Item2].nextState != CellState.SAND
+				&& cells[toReturn.Item1, toReturn.Item2].nextState != CellState.WOOD
+				&& cells[toReturn.Item1, toReturn.Item2].nextState != CellState.SMOKE)
 				{
 					return toReturn;
 				}

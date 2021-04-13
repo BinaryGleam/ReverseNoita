@@ -221,6 +221,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ratio: {x: 120, y: 120}
   updateTimer: 0
-  cursorSize: 1
-  cursorState: 2
+  cursorSize: 5
+  cursorState: 4
   mat: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
