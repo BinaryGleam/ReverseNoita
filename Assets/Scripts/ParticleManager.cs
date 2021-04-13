@@ -195,7 +195,7 @@ public class ParticleManager : MonoBehaviour
 				return;
 			Vector2Int coord = new Vector2Int(Mathf.FloorToInt(mousePos.x / size), Mathf.FloorToInt(mousePos.y / size));
 			cells[coord.x, coord.y].CurrentState = cursorState;
-			cells[coord.x, coord.y].nextState = CellState.INACTIVE;
+			cells[coord.x, coord.y].nextState = cursorState;
 		}
 	}
 
