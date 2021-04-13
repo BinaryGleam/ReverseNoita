@@ -228,7 +228,7 @@ public class ParticleManager : MonoBehaviour
 					coordinate = FindFreeCellSand(_xIndex,_yIndex);
 
 					cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
-					if(cells[coordinate.Item1, coordinate.Item2].CurrentState == CellState.WATER)
+					if(cells[coordinate.Item1, coordinate.Item2].nextState == CellState.WATER)
 						cells[_xIndex, _yIndex].nextState = CellState.WATER;
 
 					cells[coordinate.Item1,coordinate.Item2].nextState = CellState.SAND;
@@ -258,8 +258,8 @@ public class ParticleManager : MonoBehaviour
 		if (_yIndex != 0)
 		{
 			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex - 1);
-			if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
-				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD)
+			if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+				|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER)
 			{
 				return toReturn;
 			}
@@ -267,8 +267,8 @@ public class ParticleManager : MonoBehaviour
 			if (_xIndex > 0)
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex - 1);
-				if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
-					&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD)
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER)
 				{
 					return toReturn;
 				}
@@ -277,8 +277,8 @@ public class ParticleManager : MonoBehaviour
 			if(_xIndex < ratio.x - 1)
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex - 1);
-				if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
-					&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD)
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE
+					|| cells[toReturn.Item1, toReturn.Item2].nextState == CellState.WATER)
 				{
 					return toReturn;
 				}
