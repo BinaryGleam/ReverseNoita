@@ -12,7 +12,7 @@ public enum CellState
 	//ACID,
 	FIRE,
 	//STEAM,
-	//SMOKE,
+	SMOKE,
 	WOOD,
     COUNT
 }
@@ -47,6 +47,10 @@ public struct Cell
 					break;
 				case CellState.FIRE:
 					currentColor = Color.red;
+					break;
+				case CellState.SMOKE:
+					currentColor = Color.gray;
+					currentColor.a = 0.33f;
 					break;
 				default:
 					break;
@@ -268,7 +272,7 @@ public class ParticleManager : MonoBehaviour
 			{
 				List<System.Tuple<int, int>> canBurnCells = FindFreeCellFire(_xIndex, _yIndex);
 
-				cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
+				cells[_xIndex, _yIndex].nextState = CellState.SMOKE;
 				foreach (System.Tuple<int, int> burnCoord in canBurnCells)
 				{
 					if(cells[burnCoord.Item1,burnCoord.Item2].nextState == CellState.WOOD)
@@ -279,6 +283,15 @@ public class ParticleManager : MonoBehaviour
 
 				break;
 			}
+			case CellState.SMOKE:
+				{
+					System.Tuple<int, int> coordinate = new System.Tuple<int, int>(_xIndex, _yIndex);
+					coordinate = FindFreeCellSmoke(_xIndex, _yIndex);
+
+					cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
+					cells[coordinate.Item1, coordinate.Item2].nextState = CellState.SMOKE;
+					break;
+				}
 			case CellState.ACTIVE:
 			case CellState.INACTIVE:
 			case CellState.WOOD:
@@ -400,6 +413,40 @@ public class ParticleManager : MonoBehaviour
 					toReturn.Add(new System.Tuple<int,int>(i,j));
 				}
 			}
+		}
+		return toReturn;
+	}
+
+	private System.Tuple<int, int> FindFreeCellSmoke(int _xIndex, int _yIndex)
+	{
+		System.Tuple<int, int> toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
+		if (_yIndex != ratio.y - 1)
+		{
+			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex + 1);
+			if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
+			{
+				return toReturn;
+			}
+
+			if (_xIndex > 0)
+			{
+				toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex + 1);
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
+				{
+					return toReturn;
+				}
+			}
+
+			if (_xIndex < ratio.x - 1)
+			{
+				toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex + 1);
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
+				{
+					return toReturn;
+				}
+			}
+
+			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
 		}
 		return toReturn;
 	}
