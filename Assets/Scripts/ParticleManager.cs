@@ -60,6 +60,8 @@ public class ParticleManager : MonoBehaviour
 {
     public Vector2Int ratio = Vector2Int.zero;
 	public float updateTimer = 0f;
+	[Range(0,10)]
+	public int cursorSize = 0;
 	private float chrono;
 	private Cell[,] cells;
     private float size = 1.0f;
@@ -196,9 +198,25 @@ public class ParticleManager : MonoBehaviour
 			mousePos = Camera.main.ScreenToViewportPoint(mousePos);
 			if (mousePos.x < 0f || mousePos.y < 0f || mousePos.x > 1f || mousePos.y > 1f)
 				return;
+
 			Vector2Int coord = new Vector2Int(Mathf.FloorToInt(mousePos.x / size), Mathf.FloorToInt(mousePos.y / size));
-			cells[coord.x, coord.y].CurrentState = cursorState;
-			cells[coord.x, coord.y].nextState = cursorState;
+
+			int minX = coord.x - cursorSize >= 0 ? coord.x - cursorSize : 0;
+			int maxX = coord.x + cursorSize < ratio.x - 1 ? coord.x + cursorSize : ratio.x - 1;
+
+			int minY = coord.y - cursorSize >= 0 ? coord.y - cursorSize : 0;
+			int maxY = coord.y + cursorSize < ratio.y - 1 ? coord.y + cursorSize : ratio.y - 1;
+
+			for (int j = minY; j <= maxY; j++)
+			{
+				for (int i = minX; i <= maxX; i++)
+				{
+					cells[i, j].CurrentState = cursorState;
+					cells[i, j].nextState = cursorState;
+				}
+			}
+			//cells[coord.x, coord.y].CurrentState = cursorState;
+			//cells[coord.x, coord.y].nextState = cursorState;
 		}
 	}
 
