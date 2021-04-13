@@ -56,9 +56,9 @@ public struct Cell
 public class ParticleManager : MonoBehaviour
 {
     public Vector2Int ratio = Vector2Int.zero;
-	//public float updateTimer = 1f;
-	//private float chrono;
-    private Cell[,] cells;
+	public float updateTimer = 0f;
+	private float chrono;
+	private Cell[,] cells;
     private float size = 1.0f;
     private Vector2 scaleSize = Vector2.zero;
 
@@ -70,9 +70,9 @@ public class ParticleManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-		//chrono = updateTimer;
+		chrono = updateTimer;
 
-        cells = new Cell[ratio.x,ratio.y];
+		cells = new Cell[ratio.x,ratio.y];
 
 		for (int j = 0; j < ratio.y; j++)
 		{
@@ -94,10 +94,10 @@ public class ParticleManager : MonoBehaviour
     {
 		ComputeInput();
 
-		//if(chrono > 0f)
-			//chrono -= Time.deltaTime;
+		if (chrono > 0f)
+			chrono -= Time.deltaTime;
 
-		if(simulationIsOn/* && chrono <= 0f*/)
+		if (simulationIsOn && chrono <= 0f)
 		{
 			for (int j = 0; j < ratio.y; j++)
 			{
@@ -113,7 +113,7 @@ public class ParticleManager : MonoBehaviour
 					cells[i, j].CurrentState = cells[i, j].nextState;
 				}
 			}
-			//chrono = updateTimer;
+			chrono = updateTimer;
 		}
 	}
 
@@ -195,7 +195,7 @@ public class ParticleManager : MonoBehaviour
 				return;
 			Vector2Int coord = new Vector2Int(Mathf.FloorToInt(mousePos.x / size), Mathf.FloorToInt(mousePos.y / size));
 			cells[coord.x, coord.y].CurrentState = cursorState;
-			cells[coord.x, coord.y].nextState = cursorState;
+			cells[coord.x, coord.y].nextState = CellState.INACTIVE;
 		}
 	}
 
@@ -203,25 +203,25 @@ public class ParticleManager : MonoBehaviour
 	{
 		switch (cells[_xIndex, _yIndex].CurrentState)
 		{
-			case CellState.INACTIVE:
-			{
-					//int aliveCells = CountAliveCells(_xIndex, _yIndex);
-					//if (aliveCells == 3)
-					//{
-					//	cells[_xIndex, _yIndex].nextState = CellState.ACTIVE;
-					//	Debug.Log("Should resurect at " + _xIndex + ";" + _yIndex);
-					//}
-				break;
-			}
-			case CellState.ACTIVE:
-			{
-					//int aliveCells = CountAliveCells(_xIndex, _yIndex);
-					//if (aliveCells < 2 || aliveCells > 3)
-					//{
-					//	cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
-					//}
-				break;
-			}
+			//case CellState.INACTIVE:
+			//{
+			//		//int aliveCells = CountAliveCells(_xIndex, _yIndex);
+			//		//if (aliveCells == 3)
+			//		//{
+			//		//	cells[_xIndex, _yIndex].nextState = CellState.ACTIVE;
+			//		//	Debug.Log("Should resurect at " + _xIndex + ";" + _yIndex);
+			//		//}
+			//	break;
+			//}
+			//case CellState.ACTIVE:
+			//{
+			//		//int aliveCells = CountAliveCells(_xIndex, _yIndex);
+			//		//if (aliveCells < 2 || aliveCells > 3)
+			//		//{
+			//		//	cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
+			//		//}
+			//	break;
+			//}
 			case CellState.SAND:
 			{
 					System.Tuple<int, int> coordinate = new System.Tuple<int,int>(_xIndex,_yIndex);
@@ -243,6 +243,8 @@ public class ParticleManager : MonoBehaviour
 					cells[coordinate.Item1, coordinate.Item2].nextState = CellState.WATER;
 					break;
 				}
+			case CellState.ACTIVE:
+			case CellState.INACTIVE:
 			case CellState.WOOD:
 			case CellState.COUNT:
 			default:
@@ -296,9 +298,7 @@ public class ParticleManager : MonoBehaviour
 			if (_yIndex != 0)
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex, _yIndex - 1);
-				if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
-					&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD
-					&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WATER)
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
 				{
 					return toReturn;
 				}
@@ -306,9 +306,7 @@ public class ParticleManager : MonoBehaviour
 				if (_xIndex > 0)
 				{
 					toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex - 1);
-					if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
-						&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD
-						&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WATER)
+					if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
 					{
 						return toReturn;
 					}
@@ -317,9 +315,7 @@ public class ParticleManager : MonoBehaviour
 				if (_xIndex < ratio.x - 1)
 				{
 					toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex - 1);
-					if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
-						&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD
-						&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WATER)
+					if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
 					{
 						return toReturn;
 					}
@@ -327,27 +323,23 @@ public class ParticleManager : MonoBehaviour
 
 				toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
 			}
+
 			if (_xIndex > 0)
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex - 1, _yIndex);
-				if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
-				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD
-				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WATER)
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
 				{
 					return toReturn;
 				}
 			}
-			if(_xIndex < scaleSize.x - 1)
+			if (_xIndex < ratio.x - 1)
 			{
 				toReturn = new System.Tuple<int, int>(_xIndex + 1, _yIndex);
-				if (cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.SAND
-				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WOOD
-				&& cells[toReturn.Item1, toReturn.Item2].CurrentState != CellState.WATER)
+				if (cells[toReturn.Item1, toReturn.Item2].nextState == CellState.INACTIVE)
 				{
 					return toReturn;
 				}
 			}
-
 			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
 		}
 		return toReturn;
