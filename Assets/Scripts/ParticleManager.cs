@@ -10,7 +10,7 @@ public enum CellState
 	WATER,
 	//LAVA,
 	//ACID,
-	//FIRE,
+	FIRE,
 	//STEAM,
 	//SMOKE,
 	WOOD,
@@ -44,6 +44,9 @@ public struct Cell
 					break;
 				case CellState.WOOD:
 					currentColor = new Color(0.413f,0.346f,0.240f);
+					break;
+				case CellState.FIRE:
+					currentColor = Color.red;
 					break;
 				default:
 					break;
@@ -235,14 +238,29 @@ public class ParticleManager : MonoBehaviour
 					break;
 			}
 			case CellState.WATER:
-				{
-					System.Tuple<int, int> coordinate = new System.Tuple<int, int>(_xIndex, _yIndex);
+			{
+				System.Tuple<int, int> coordinate = new System.Tuple<int, int>(_xIndex, _yIndex);
 
-					coordinate = FindFreeCellWater(_xIndex, _yIndex);
-					cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
-					cells[coordinate.Item1, coordinate.Item2].nextState = CellState.WATER;
-					break;
+				coordinate = FindFreeCellWater(_xIndex, _yIndex);
+				cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
+				cells[coordinate.Item1, coordinate.Item2].nextState = CellState.WATER;
+				break;
+			}
+			case CellState.FIRE:
+			{
+				List<System.Tuple<int, int>> canBurnCells = FindFreeCellFire(_xIndex, _yIndex);
+
+				cells[_xIndex, _yIndex].nextState = CellState.INACTIVE;
+				foreach (System.Tuple<int, int> burnCoord in canBurnCells)
+				{
+					if(cells[burnCoord.Item1,burnCoord.Item2].nextState == CellState.WOOD)
+					{
+						cells[burnCoord.Item1, burnCoord.Item2].nextState = CellState.FIRE;
+					}
 				}
+
+				break;
+			}
 			case CellState.ACTIVE:
 			case CellState.INACTIVE:
 			case CellState.WOOD:
@@ -341,6 +359,29 @@ public class ParticleManager : MonoBehaviour
 				}
 			}
 			toReturn = new System.Tuple<int, int>(_xIndex, _yIndex);
+		}
+		return toReturn;
+	}
+
+	private List<System.Tuple<int, int>> FindFreeCellFire(int _xIndex, int _yIndex)
+	{
+		List <System.Tuple<int, int>> toReturn = new List<System.Tuple<int, int>>();
+		
+		int minX = _xIndex - 1 >= 0 ? _xIndex - 1 : _xIndex;
+		int maxX = _xIndex + 1 < ratio.x - 1 ? _xIndex + 1 : _xIndex;
+
+		int minY = _yIndex - 1 >= 0 ? _yIndex - 1 : _yIndex;
+		int maxY = _yIndex + 1 < ratio.y - 1 ? _yIndex + 1 : _yIndex;
+
+		for(int j = minY; j <= maxY; j++)
+		{
+			for(int i = minX; i <= maxX; i++)
+			{
+				if(cells[i, j].nextState == CellState.WOOD)
+				{
+					toReturn.Add(new System.Tuple<int,int>(i,j));
+				}
+			}
 		}
 		return toReturn;
 	}
